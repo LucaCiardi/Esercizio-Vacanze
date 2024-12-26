@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 using Entities;
 using Utility;
 
@@ -8,20 +9,20 @@ namespace DAOs
     {
         private static MedagliaDAO? _instance;
         private static readonly object _lock = new();
-        private readonly string _connectionString;
+        private readonly IDatabase _db;
 
-        private MedagliaDAO(string connectionString)
+        private MedagliaDAO(IDatabase db)
         {
-            _connectionString = connectionString;
+            _db = db;
         }
 
-        public static MedagliaDAO GetInstance(string connectionString)
+        public static MedagliaDAO GetInstance(IDatabase db)
         {
             if (_instance == null)
             {
                 lock (_lock)
                 {
-                    _instance ??= new MedagliaDAO(connectionString);
+                    _instance ??= new MedagliaDAO(db);
                 }
             }
             return _instance;
@@ -30,72 +31,28 @@ namespace DAOs
         public List<Entity> GetRecords()
         {
             var result = new List<Entity>();
-            using (var connection = new SqlConnection(_connectionString))
+            var command = new SqlCommand("SELECT * FROM Medagliere");
+            var fullResponse = _db.ReadDb(command);
+            if (fullResponse == null) return result;
+
+            foreach (var singleResponse in fullResponse)
             {
-                var command = new SqlCommand("SELECT * FROM Medagliere", connection);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    var medaglia = new Medaglia
-                    {
-                        Id = reader.GetInt32(0),
-                        Podio = reader.GetString(1),
-                        Evento = new Evento
-                        {
-                            Id = reader.GetInt32(2),
-                            Tipo = reader.GetString(3),
-                            Luogo = reader.GetString(4),
-                            Anno = reader.GetInt32(5)
-                        },
-                        Gara = new Gara
-                        {
-                            Id = reader.GetInt32(6),
-                            Nome = reader.GetString(7),
-                            Categoria = reader.GetString(8),
-                            Indoor = reader.GetBoolean(9),
-                            Squadra = reader.GetBoolean(10)
-                        }
-                    };
-                    result.Add(medaglia);
-                }
+                var medaglia = new Medaglia();
+                medaglia.FromDictionary(singleResponse);
+                result.Add(medaglia);
             }
             return result;
         }
 
         public Entity? FindRecord(int recordId)
         {
-            Medaglia? medaglia = null;
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("SELECT * FROM Medagliere WHERE Id = @Id", connection);
-                command.Parameters.AddWithValue("@Id", recordId);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                if (reader.Read())
-                {
-                    medaglia = new Medaglia
-                    {
-                        Id = reader.GetInt32(0),
-                        Podio = reader.GetString(1),
-                        Evento = new Evento
-                        {
-                            Id = reader.GetInt32(2),
-                            Tipo = reader.GetString(3),
-                            Luogo = reader.GetString(4),
-                            Anno = reader.GetInt32(5)
-                        },
-                        Gara = new Gara
-                        {
-                            Id = reader.GetInt32(6),
-                            Nome = reader.GetString(7),
-                            Categoria = reader.GetString(8),
-                            Indoor = reader.GetBoolean(9),
-                            Squadra = reader.GetBoolean(10)
-                        }
-                    };
-                }
-            }
+            var command = new SqlCommand("SELECT * FROM Medagliere WHERE Id = @Id");
+            command.Parameters.AddWithValue("@Id", recordId);
+            var singleResponse = _db.ReadOneDb(command);
+            if (singleResponse == null) return null;
+
+            var medaglia = new Medaglia();
+            medaglia.FromDictionary(singleResponse);
             return medaglia;
         }
 
@@ -104,14 +61,12 @@ namespace DAOs
             if (entity is not Medaglia medaglia)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "INSERT INTO Medagliere (Podio, IdEvento, IdGara) VALUES (@Podio, @IdEvento, @IdGara)", connection);
+                "INSERT INTO Medagliere (Podio, IdEvento, IdGara) VALUES (@Podio, @IdEvento, @IdGara)");
             command.Parameters.AddWithValue("@Podio", StringUtils.EscapeSingleQuotes(medaglia.Podio));
             command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
             command.Parameters.AddWithValue("@IdGara", medaglia.Gara.Id);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool UpdateRecord(Entity entity)
@@ -119,24 +74,20 @@ namespace DAOs
             if (entity is not Medaglia medaglia)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "UPDATE Medagliere SET Podio = @Podio, IdEvento = @IdEvento, IdGara = @IdGara WHERE Id = @Id", connection);
+                "UPDATE Medagliere SET Podio = @Podio, IdEvento = @IdEvento, IdGara = @IdGara WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", medaglia.Id);
             command.Parameters.AddWithValue("@Podio", StringUtils.EscapeSingleQuotes(medaglia.Podio));
             command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
             command.Parameters.AddWithValue("@IdGara", medaglia.Gara.Id);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool DeleteRecord(int recordId)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("DELETE FROM Medagliere WHERE Id = @Id", connection);
+            var command = new SqlCommand("DELETE FROM Medagliere WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", recordId);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
     }
 }

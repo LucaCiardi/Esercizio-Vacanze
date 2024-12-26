@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 using Entities;
 using Utility;
 
@@ -8,20 +9,20 @@ namespace DAOs
     {
         private static GaraDAO? _instance;
         private static readonly object _lock = new();
-        private readonly string _connectionString;
+        private readonly IDatabase _db;
 
-        private GaraDAO(string connectionString)
+        private GaraDAO(IDatabase db)
         {
-            _connectionString = connectionString;
+            _db = db;
         }
 
-        public static GaraDAO GetInstance(string connectionString)
+        public static GaraDAO GetInstance(IDatabase db)
         {
             if (_instance == null)
             {
                 lock (_lock)
                 {
-                    _instance ??= new GaraDAO(connectionString);
+                    _instance ??= new GaraDAO(db);
                 }
             }
             return _instance;
@@ -30,48 +31,28 @@ namespace DAOs
         public List<Entity> GetRecords()
         {
             var result = new List<Entity>();
-            using (var connection = new SqlConnection(_connectionString))
+            var command = new SqlCommand("SELECT * FROM Gare");
+            var fullResponse = _db.ReadDb(command);
+            if (fullResponse == null) return result;
+
+            foreach (var singleResponse in fullResponse)
             {
-                var command = new SqlCommand("SELECT * FROM Gare", connection);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    var gara = new Gara
-                    {
-                        Id = reader.GetInt32(0),
-                        Nome = reader.GetString(1),
-                        Categoria = reader.GetString(2),
-                        Indoor = reader.GetBoolean(3),
-                        Squadra = reader.GetBoolean(4)
-                    };
-                    result.Add(gara);
-                }
+                var gara = new Gara();
+                gara.FromDictionary(singleResponse);
+                result.Add(gara);
             }
             return result;
         }
 
         public Entity? FindRecord(int recordId)
         {
-            Gara? gara = null;
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("SELECT * FROM Gare WHERE Id = @Id", connection);
-                command.Parameters.AddWithValue("@Id", recordId);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                if (reader.Read())
-                {
-                    gara = new Gara
-                    {
-                        Id = reader.GetInt32(0),
-                        Nome = reader.GetString(1),
-                        Categoria = reader.GetString(2),
-                        Indoor = reader.GetBoolean(3),
-                        Squadra = reader.GetBoolean(4)
-                    };
-                }
-            }
+            var command = new SqlCommand("SELECT * FROM Gare WHERE Id = @Id");
+            command.Parameters.AddWithValue("@Id", recordId);
+            var singleResponse = _db.ReadOneDb(command);
+            if (singleResponse == null) return null;
+
+            var gara = new Gara();
+            gara.FromDictionary(singleResponse);
             return gara;
         }
 
@@ -80,15 +61,13 @@ namespace DAOs
             if (entity is not Gara gara)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "INSERT INTO Gare (Nome, Categoria, Indoor, Squadra) VALUES (@Nome, @Categoria, @Indoor, @Squadra)", connection);
+                "INSERT INTO Gare (Nome, Categoria, Indoor, Squadra) VALUES (@Nome, @Categoria, @Indoor, @Squadra)");
             command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(gara.Nome));
             command.Parameters.AddWithValue("@Categoria", StringUtils.EscapeSingleQuotes(gara.Categoria));
             command.Parameters.AddWithValue("@Indoor", gara.Indoor);
             command.Parameters.AddWithValue("@Squadra", gara.Squadra);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool UpdateRecord(Entity entity)
@@ -96,25 +75,21 @@ namespace DAOs
             if (entity is not Gara gara)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "UPDATE Gare SET Nome = @Nome, Categoria = @Categoria, Indoor = @Indoor, Squadra = @Squadra WHERE Id = @Id", connection);
+                "UPDATE Gare SET Nome = @Nome, Categoria = @Categoria, Indoor = @Indoor, Squadra = @Squadra WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", gara.Id);
             command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(gara.Nome));
             command.Parameters.AddWithValue("@Categoria", StringUtils.EscapeSingleQuotes(gara.Categoria));
             command.Parameters.AddWithValue("@Indoor", gara.Indoor);
             command.Parameters.AddWithValue("@Squadra", gara.Squadra);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool DeleteRecord(int recordId)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("DELETE FROM Gare WHERE Id = @Id", connection);
+            var command = new SqlCommand("DELETE FROM Gare WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", recordId);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
     }
 }

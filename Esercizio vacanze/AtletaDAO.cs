@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 using Entities;
 using Utility;
 
@@ -8,20 +9,20 @@ namespace DAOs
     {
         private static AtletaDAO? _instance;
         private static readonly object _lock = new();
-        private readonly string _connectionString;
+        private readonly IDatabase _db;
 
-        private AtletaDAO(string connectionString)
+        private AtletaDAO(IDatabase db)
         {
-            _connectionString = connectionString;
+            _db = db;
         }
 
-        public static AtletaDAO GetInstance(string connectionString)
+        public static AtletaDAO GetInstance(IDatabase db)
         {
             if (_instance == null)
             {
                 lock (_lock)
                 {
-                    _instance ??= new AtletaDAO(connectionString);
+                    _instance ??= new AtletaDAO(db);
                 }
             }
             return _instance;
@@ -30,48 +31,28 @@ namespace DAOs
         public List<Entity> GetRecords()
         {
             var result = new List<Entity>();
-            using (var connection = new SqlConnection(_connectionString))
+            var command = new SqlCommand("SELECT * FROM Atleti");
+            var fullResponse = _db.ReadDb(command);
+            if (fullResponse == null) return result;
+
+            foreach (var singleResponse in fullResponse)
             {
-                var command = new SqlCommand("SELECT * FROM Atleti", connection);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    var atleta = new Atleta
-                    {
-                        Id = reader.GetInt32(0),
-                        Nome = reader.GetString(1),
-                        Cognome = reader.GetString(2),
-                        Dob = reader.GetDateTime(3),
-                        Nazione = reader.GetString(4)
-                    };
-                    result.Add(atleta);
-                }
+                var atleta = new Atleta();
+                atleta.FromDictionary(singleResponse);
+                result.Add(atleta);
             }
             return result;
         }
 
         public Entity? FindRecord(int recordId)
         {
-            Atleta? atleta = null;
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("SELECT * FROM Atleti WHERE Id = @Id", connection);
-                command.Parameters.AddWithValue("@Id", recordId);
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                if (reader.Read())
-                {
-                    atleta = new Atleta
-                    {
-                        Id = reader.GetInt32(0),
-                        Nome = reader.GetString(1),
-                        Cognome = reader.GetString(2),
-                        Dob = reader.GetDateTime(3),
-                        Nazione = reader.GetString(4)
-                    };
-                }
-            }
+            var command = new SqlCommand("SELECT * FROM Atleti WHERE Id = @Id");
+            command.Parameters.AddWithValue("@Id", recordId);
+            var singleResponse = _db.ReadOneDb(command);
+            if (singleResponse == null) return null;
+
+            var atleta = new Atleta();
+            atleta.FromDictionary(singleResponse);
             return atleta;
         }
 
@@ -80,15 +61,13 @@ namespace DAOs
             if (entity is not Atleta atleta)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "INSERT INTO Atleti (Nome, Cognome, Dob, Nazione) VALUES (@Nome, @Cognome, @Dob, @Nazione)", connection);
+                "INSERT INTO Atleti (Nome, Cognome, Dob, Nazione) VALUES (@Nome, @Cognome, @Dob, @Nazione)");
             command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(atleta.Nome));
             command.Parameters.AddWithValue("@Cognome", StringUtils.EscapeSingleQuotes(atleta.Cognome));
             command.Parameters.AddWithValue("@Dob", atleta.Dob);
             command.Parameters.AddWithValue("@Nazione", StringUtils.EscapeSingleQuotes(atleta.Nazione));
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool UpdateRecord(Entity entity)
@@ -96,25 +75,21 @@ namespace DAOs
             if (entity is not Atleta atleta)
                 return false;
 
-            using var connection = new SqlConnection(_connectionString);
             var command = new SqlCommand(
-                "UPDATE Atleti SET Nome = @Nome, Cognome = @Cognome, Dob = @Dob, Nazione = @Nazione WHERE Id = @Id", connection);
+                "UPDATE Atleti SET Nome = @Nome, Cognome = @Cognome, Dob = @Dob, Nazione = @Nazione WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", atleta.Id);
             command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(atleta.Nome));
             command.Parameters.AddWithValue("@Cognome", StringUtils.EscapeSingleQuotes(atleta.Cognome));
             command.Parameters.AddWithValue("@Dob", atleta.Dob);
             command.Parameters.AddWithValue("@Nazione", StringUtils.EscapeSingleQuotes(atleta.Nazione));
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
 
         public bool DeleteRecord(int recordId)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("DELETE FROM Atleti WHERE Id = @Id", connection);
+            var command = new SqlCommand("DELETE FROM Atleti WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", recordId);
-            connection.Open();
-            return command.ExecuteNonQuery() > 0;
+            return _db.UpdateDb(command);
         }
     }
 }
