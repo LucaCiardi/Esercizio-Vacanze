@@ -1,0 +1,19 @@
+id;gara;categoria;indoor;squadra
+1;Salto con l'asta;Atletica Leggera;0;0
+2;Salto in lungo;Atletica Leggera;0;0
+3;Sciabola;Scherma;1;0
+4;100 metri;Atletica Leggera;0;0
+5;50 metri Farfalla;Nuoto;1;0
+6;Anelli;Ginnastica;1;0
+8;Tiro al Piattello;Armi da Fuoco;0;1
+9;Staffetta;Atletica Leggera;0;1
+10;200 metri;Atletica Leggera;0;0
+11;Lancio del Giavellotto;Atletica Leggera;0;0
+12;Nuoto Sincronizzato;Nuoto;1;1
+13;Pentathlon Moderno;Sport Combinati;0;0
+14;Calcio;Sport di Squadra;0;1
+15;Pallavolo;Sport di Squadra;1;1
+16;Tennis Tavolo;Sport Individuali;1;0
+17;Sollevamento Pesi;Pesistica;1;0
+18;Maratona;Atletica Leggera;0;0
+19;Salto Triplo;Atletica Leggera;0;0

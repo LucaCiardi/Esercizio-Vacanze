@@ -1,0 +1,21 @@
+id;idatleta;idgara;idevento;medaglia
+1;1;1;1;Bronzo
+2;1;7;1;Bronzo
+3;2;3;6;Oro
+4;2;2;1;Argento
+5;3;2;4;Argento
+6;5;5;5;Bronzo
+7;5;5;1;Argento
+12;NULL;7;2;Argento
+13;NULL;7;1;Oro
+14;6;9;1;Argento
+15;5;9;1;Argento
+16;3;9;1;Argento
+17;4;8;4;Oro
+18;4;8;1;Oro
+19;6;9;1;Bronzo
+20;5;9;1;Bronzo
+  ;20;19;9;Bronzo
+  ;19;13;1;Argento
+  ;13;17;1;Bronzo
+  ;17;NULL;12;Oro

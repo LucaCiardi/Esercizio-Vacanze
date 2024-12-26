@@ -1,0 +1,21 @@
+1;Ramsey;Farnham;1986-12-06;Indonesia
+2;Herschel;Rohmer;1965-12-20;Kosovo
+3;Ike;Oxley;1943-05-20;Indonesia
+4;Quintus;Quickenden;1984-04-22;Cina
+5;Raynard;O' Bee;1974-07-16;Indonesia
+6;Francois;Kilborn;1991-01-19;Indonesia
+7;Claudette;Fitzwilliam;1972-02-02;Brasile
+8;Barnabas;O'Hanlon;1988-11-11;Russia
+9;Devin;Creighton;1995-07-07;Canada
+10;Giselle;Maitland;1990-05-15;Italia
+11;Eleanor;Pendragon;1978-03-21;Francia
+12;Alaric;Gainsborough;1982-08-17;Spagna
+13;Benedict;Thornfield;1976-09-30;Australia
+14;Cassandra;Brighton;1985-12-25;Regno Unito
+15;Darius;Storm;1992-04-04;Sudafrica
+16;Evangeline;Starling;1998-06-19;Giappone
+17;Fitz;Randolph;1969-01-12;Nuova Zelanda
+18;Gwendolyn;Fairfax;1970-07-14;Germania
+19;Hector;Van Helsing;1983-11-05;Paesi Bassi
+20;Isolde;Avalon;1994-09-09;Svizzera
+

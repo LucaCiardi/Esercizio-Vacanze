@@ -1,0 +1,12 @@
+id;evento;anno;luogo
+1;Olimpiadi;2021;Tokyo
+3;Olimpiadi;1948;Londra
+4;Olimpiadi;1996;Atlanta
+5;Mondiali di Nuoto;2023;Fukuoka
+6;Mondiali di Scherma;2023;Milano
+7;Mondiali di Calcio;2023;Australia
+8;Europei di Calcio;2018;Londra
+9;Europei di Atletica;2022;Monaco di Baviera
+10;Mondiali di Rugby;2019;Giappone
+11;Giochi Panamericani;2019;Lima
+12;Coppa America di Vela;2021;Auckland
