@@ -63,7 +63,7 @@ public class AdditionalMethods
 
         if (results == null || !results.Any())
         {
-            Console.WriteLine("No medals found for the athlete.");
+            Console.WriteLine("Nessuna medaglia trovata per l'atleta.");
             return;
         }
 
@@ -77,6 +77,44 @@ public class AdditionalMethods
                 Console.WriteLine($"  - {lastMedalType}");
             }
             Console.WriteLine($"    - {medal["Anno"]}: {medal["Gara"]}, {medal["Evento"]} {medal["Luogo"]} {medal["Anno"]}");
+        }
+    }
+
+    public void DisplayEvents(int eventId)
+    {
+        var query = @"
+            SELECT 
+                g.Nome AS Gara,
+                e.Tipo AS Evento,
+                e.Luogo AS Luogo,
+                e.Anno AS Anno
+            FROM 
+                Gare g
+            JOIN 
+                Medagliere m ON g.Id = m.IdGara
+            JOIN 
+                Eventi e ON m.IdEvento = e.Id
+            WHERE 
+                e.Id = @eventId
+            ORDER BY 
+                g.Nome;
+        ";
+
+        using var command = new SqlCommand(query);
+        command.Parameters.AddWithValue("@eventId", eventId);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any())
+        {
+            Console.WriteLine("Nessun evento trovato per l'ID specificato.");
+            return;
+        }
+
+        Console.WriteLine($"Evento: {results[0]["Evento"]} {results[0]["Luogo"]} {results[0]["Anno"]}");
+        foreach (var gara in results)
+        {
+            Console.WriteLine($"  - {gara["Gara"]}");
         }
     }
 }
