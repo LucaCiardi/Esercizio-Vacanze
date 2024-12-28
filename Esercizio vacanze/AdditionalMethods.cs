@@ -79,7 +79,6 @@ public class AdditionalMethods
             Console.WriteLine($"    - {medal["Anno"]}: {medal["Gara"]}, {medal["Evento"]} {medal["Luogo"]} {medal["Anno"]}");
         }
     }
-
     public void DisplayEvents(int eventId)
     {
         var query = @"
@@ -117,7 +116,6 @@ public class AdditionalMethods
             Console.WriteLine($"  - {gara["Gara"]}");
         }
     }
-
     public void DisplayMedalsCount(int athleteId)
     {
         var query = @"
@@ -182,6 +180,44 @@ public class AdditionalMethods
         foreach (var atleta in results)
         {
             Console.WriteLine($"  - {atleta["Nome"]} {atleta["Cognome"]}");
+        }
+    }
+    public void DisplayOldestGoldMedalists()
+    {
+        var query = @"
+        SELECT
+            a.Nome AS Nome,
+            a.Cognome AS Cognome,
+            DATEDIFF(YEAR, a.DataNascita, e.Anno) AS Eta
+        FROM 
+            Medagliere m
+        JOIN 
+            Atleti a ON m.IdAtleta = a.Id
+        JOIN 
+            Eventi e ON m.IdEvento = e.Id
+        WHERE 
+            m.Podio = 'Oro'
+        ORDER BY 
+            Eta DESC;
+    ";
+
+        using var command = new SqlCommand(query);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any())
+        {
+            Console.WriteLine("Nessun atleta trovato con una medaglia d'oro.");
+            return;
+        }
+
+        var oldestAge = Convert.ToInt32(results.First()["Eta"]);
+        var oldestAthletes = results.Where(r => Convert.ToInt32(r["Eta"]) == oldestAge).ToList();
+
+        Console.WriteLine("Gli atleti più anziani che hanno vinto una medaglia d'oro sono:");
+        foreach (var atleta in oldestAthletes)
+        {
+            Console.WriteLine($"{atleta["Nome"]} {atleta["Cognome"]}, Età: {atleta["Eta"]} anni");
         }
     }
 
