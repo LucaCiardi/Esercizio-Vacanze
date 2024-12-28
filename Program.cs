@@ -1,2 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using Utility;
+
+var database = new Database("Generation");
+var menuManagement = new MenuManagement(database);
+menuManagement.StartMenu();
