@@ -221,5 +221,38 @@ public class AdditionalMethods
             Console.WriteLine($"{atleta["Nome"]} {atleta["Cognome"]}, {atleta["Nazione"]}, Età: {atleta["Eta"]} anni");
         }
     }
+    public void DisplayTeamSportMedals()
+    {
+        var query = @"
+        SELECT
+            g.Categoria AS Sport,
+            COUNT(DISTINCT m.IdAtleta) AS Giocatori,
+            COUNT(m.Id) AS Medaglie
+        FROM 
+            Medagliere m
+        JOIN 
+            Gare g ON m.IdGara = g.Id
+        WHERE 
+            g.Squadra = 1
+        GROUP BY 
+            g.Categoria;
+    ";
+
+        using var command = new SqlCommand(query);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any())
+        {
+            Console.WriteLine("Nessuna medaglia trovata negli sport di squadra.");
+            return;
+        }
+
+        Console.WriteLine("Quante medaglie sono state vinte negli sport di squadra e quanti atleti ne facevano parte:");
+        foreach (var result in results)
+        {
+            Console.WriteLine($"  - Sport: {result["Sport"]} -> Giocatori: {result["Giocatori"]}, Medaglie: {result["Medaglie"]}");
+        }
+    }
 
 }
