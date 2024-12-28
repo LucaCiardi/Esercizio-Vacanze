@@ -600,7 +600,91 @@ public class MenuManagement
                     additionalMethods.DisplayMostWonCategory();
                     break;
                 case 28:
-                    // Call method to update data through .txt files
+                    Console.Write("Inserisci il percorso del file .txt: ");
+                    var filePath28 = Console.ReadLine();
+                    if (File.Exists(filePath28))
+                    {
+                        Console.WriteLine("Seleziona il tipo di dati nel file:");
+                        Console.WriteLine("1. Atleti");
+                        Console.WriteLine("2. Eventi");
+                        Console.WriteLine("3. Gare");
+                        Console.WriteLine("4. Medagliere");
+                        if (int.TryParse(Console.ReadLine(), out int fileType))
+                        {
+                            var lines = File.ReadAllLines(filePath28);
+                            switch (fileType)
+                            {
+                                case 1:
+                                    foreach (var line in lines)
+                                    {
+                                        var data = line.Split(',');
+                                        var atleta = new Atleta
+                                        {
+                                            Nome = data[0],
+                                            Cognome = data[1],
+                                            Dob = DateTime.Parse(data[2]),
+                                            Nazione = data[3]
+                                        };
+                                        atletaDAO.CreateRecord(atleta);
+                                    }
+                                    Console.WriteLine("Dati atleti aggiornati con successo.");
+                                    break;
+                                case 2:
+                                    foreach (var line in lines)
+                                    {
+                                        var data = line.Split(',');
+                                        var evento = new Evento
+                                        {
+                                            Tipo = data[0],
+                                            Luogo = data[1],
+                                            Anno = int.Parse(data[2])
+                                        };
+                                        eventoDAO.CreateRecord(evento);
+                                    }
+                                    Console.WriteLine("Dati eventi aggiornati con successo.");
+                                    break;
+                                case 3:
+                                    foreach (var line in lines)
+                                    {
+                                        var data = line.Split(',');
+                                        var gara = new Gara
+                                        {
+                                            Nome = data[0],
+                                            Categoria = data[1],
+                                            Squadra = bool.Parse(data[2])
+                                        };
+                                        garaDAO.CreateRecord(gara);
+                                    }
+                                    Console.WriteLine("Dati gare aggiornati con successo.");
+                                    break;
+                                case 4:
+                                    foreach (var line in lines)
+                                    {
+                                        var data = line.Split(',');
+                                        var medaglia = new Medaglia
+                                        {
+                                            Podio = data[0],
+                                            Evento = eventoDAO.FindRecord(int.Parse(data[1])) as Evento,
+                                            Gara = garaDAO.FindRecord(int.Parse(data[2])) as Gara
+                                        };
+                                        medagliaDAO.CreateRecord(medaglia);
+                                    }
+                                    Console.WriteLine("Dati medagliere aggiornati con successo.");
+                                    break;
+                                default:
+                                    Console.WriteLine("Tipo di dati non riconosciuto.");
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Input non valido. Per favore, inserisci un numero.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("File non trovato.");
+                    }
                     break;
                 case 0:
                     Console.WriteLine("Uscita in corso...");
