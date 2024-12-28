@@ -151,4 +151,38 @@ public class AdditionalMethods
         Console.WriteLine($"  - Argenti: {numeroArgenti}");
         Console.WriteLine($"  - Bronzi: {numeroBronzi}");
     }
+    public void DisplayAthletesByNation(string nation)
+    {
+        var query = @"
+        SELECT DISTINCT
+            a.Nome AS Nome,
+            a.Cognome AS Cognome
+        FROM 
+            Atleti a
+        JOIN 
+            Medagliere m ON a.Id = m.IdAtleta
+        WHERE 
+            a.Nazione = @nation
+        ORDER BY 
+            a.Cognome, a.Nome;
+    ";
+
+        using var command = new SqlCommand(query);
+        command.Parameters.AddWithValue("@nation", nation);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any())
+        {
+            Console.WriteLine($"Nessun atleta trovato per la nazione {nation}.");
+            return;
+        }
+
+        Console.WriteLine($"Atleti dalla {nation} che hanno vinto medaglie:");
+        foreach (var atleta in results)
+        {
+            Console.WriteLine($"  - {atleta["Nome"]} {atleta["Cognome"]}");
+        }
+    }
+
 }
