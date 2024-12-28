@@ -553,25 +553,51 @@ public class MenuManagement
                     }
                     break;
                 case 21:
-                    // Call method to display medals for an atleta
+                    Console.Write("Inserisci l'ID dell'atleta: ");
+                    if (int.TryParse(Console.ReadLine(), out int atletaId21))
+                    {
+                        additionalMethods.DisplayMedals(atletaId21);
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 22:
-                    // Call method to display events for an evento ID
+                    Console.Write("Inserisci l'ID dell'evento: ");
+                    if (int.TryParse(Console.ReadLine(), out int eventoId22))
+                    {
+                        additionalMethods.DisplayEvents(eventoId22);
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 23:
-                    // Call method to display medal count for an atleta
+                    Console.Write("Inserisci l'ID dell'atleta: ");
+                    if (int.TryParse(Console.ReadLine(), out int atletaId23))
+                    {
+                        additionalMethods.DisplayMedalsCount(atletaId23);
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 24:
-                    // Call method to display atleti by nation
+                    Console.Write("Inserisci la nazione: ");
+                    var nazione24 = Console.ReadLine();
+                    additionalMethods.DisplayAthletesByNation(nazione24);
                     break;
                 case 25:
-                    // Call method to display oldest gold medalists
+                    additionalMethods.DisplayOldestGoldMedalists();
                     break;
                 case 26:
-                    // Call method to display team sport medals
+                    additionalMethods.DisplayTeamSportMedals();
                     break;
                 case 27:
-                    // Call method to display most won category
+                    additionalMethods.DisplayMostWonCategory();
                     break;
                 case 28:
                     // Call method to update data through .txt files
