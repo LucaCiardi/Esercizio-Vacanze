@@ -188,6 +188,7 @@ public class AdditionalMethods
         SELECT
             a.Nome AS Nome,
             a.Cognome AS Cognome,
+            a.Nazione AS Nazione,
             DATEDIFF(YEAR, a.DataNascita, e.Anno) AS Eta
         FROM 
             Medagliere m
@@ -217,7 +218,7 @@ public class AdditionalMethods
         Console.WriteLine("Gli atleti più anziani che hanno vinto una medaglia d'oro sono:");
         foreach (var atleta in oldestAthletes)
         {
-            Console.WriteLine($"{atleta["Nome"]} {atleta["Cognome"]}, Età: {atleta["Eta"]} anni");
+            Console.WriteLine($"{atleta["Nome"]} {atleta["Cognome"]}, {atleta["Nazione"]}, Età: {atleta["Eta"]} anni");
         }
     }
 
