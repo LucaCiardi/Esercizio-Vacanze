@@ -1,6 +1,7 @@
 ﻿using System;
 using DAOs;
 using Utility;
+using Entities;
 
 public class MenuManagement
 {
@@ -47,6 +48,12 @@ public class MenuManagement
 
     public void StartMenu()
     {
+        var atletaDAO = AtletaDAO.GetInstance(_database);
+        var eventoDAO = EventoDAO.GetInstance(_database);
+        var garaDAO = GaraDAO.GetInstance(_database);
+        var medagliaDAO = MedagliaDAO.GetInstance(_database);
+        var additionalMethods = AdditionalMethods.GetInstance(_database);
+
         while (true)
         {
             DisplayMenu();
@@ -60,19 +67,126 @@ public class MenuManagement
             switch (choice)
             {
                 case 1:
-                    // Call method to get all atleti
+                    var atleti = atletaDAO.GetRecords();
+                    Console.WriteLine("Elenco degli atleti:");
+                    foreach (Atleta atleta in atleti)
+                    {
+                        Console.WriteLine($"ID: {atleta.Id}, Nome: {atleta.Nome}, Cognome: {atleta.Cognome}, Data di Nascita: {atleta.Dob.ToShortDateString()}, Nazione: {atleta.Nazione}");
+                    }
                     break;
                 case 2:
-                    // Call method to find an atleta by ID
+                    Console.Write("Inserisci l'ID dell'atleta: ");
+                    if (int.TryParse(Console.ReadLine(), out int atletaId))
+                    {
+                        var atleta = atletaDAO.FindRecord(atletaId) as Atleta;
+                        if (atleta != null)
+                        {
+                            Console.WriteLine($"ID: {atleta.Id}, Nome: {atleta.Nome}, Cognome: {atleta.Cognome}, Data di Nascita: {atleta.Dob.ToShortDateString()}, Nazione: {atleta.Nazione}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Atleta non trovato.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 3:
-                    // Call method to create a new atleta
+                    var nuovoAtleta = new Atleta();
+                    Console.Write("Inserisci il nome dell'atleta: ");
+                    nuovoAtleta.Nome = Console.ReadLine();
+
+                    Console.Write("Inserisci il cognome dell'atleta: ");
+                    nuovoAtleta.Cognome = Console.ReadLine();
+
+                    Console.Write("Inserisci la data di nascita dell'atleta (yyyy-mm-dd): ");
+                    if (DateTime.TryParse(Console.ReadLine(), out DateTime dob))
+                    {
+                        nuovoAtleta.Dob = dob;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Data di nascita non valida.");
+                        break;
+                    }
+
+                    Console.Write("Inserisci la nazione dell'atleta: ");
+                    nuovoAtleta.Nazione = Console.ReadLine();
+
+                    if (atletaDAO.CreateRecord(nuovoAtleta))
+                    {
+                        Console.WriteLine("Nuovo atleta creato con successo.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Errore durante la creazione del nuovo atleta.");
+                    }
                     break;
                 case 4:
-                    // Call method to update an existing atleta
+                    Console.Write("Inserisci l'ID dell'atleta da aggiornare: ");
+                    if (int.TryParse(Console.ReadLine(), out int updateId))
+                    {
+                        var atletaDaAggiornare = atletaDAO.FindRecord(updateId) as Atleta;
+                        if (atletaDaAggiornare != null)
+                        {
+                            Console.Write("Inserisci il nuovo nome (lascia vuoto per mantenere invariato): ");
+                            var nuovoNome = Console.ReadLine();
+                            if (!string.IsNullOrEmpty(nuovoNome))
+                                atletaDaAggiornare.Nome = nuovoNome;
+
+                            Console.Write("Inserisci il nuovo cognome (lascia vuoto per mantenere invariato): ");
+                            var nuovoCognome = Console.ReadLine();
+                            if (!string.IsNullOrEmpty(nuovoCognome))
+                                atletaDaAggiornare.Cognome = nuovoCognome;
+
+                            Console.Write("Inserisci la nuova data di nascita (yyyy-mm-dd) (lascia vuoto per mantenere invariato): ");
+                            var nuovaDobInput = Console.ReadLine();
+                            if (!string.IsNullOrEmpty(nuovaDobInput) && DateTime.TryParse(nuovaDobInput, out DateTime nuovaDob))
+                                atletaDaAggiornare.Dob = nuovaDob;
+
+                            Console.Write("Inserisci la nuova nazione (lascia vuoto per mantenere invariato): ");
+                            var nuovaNazione = Console.ReadLine();
+                            if (!string.IsNullOrEmpty(nuovaNazione))
+                                atletaDaAggiornare.Nazione = nuovaNazione;
+
+                            if (atletaDAO.UpdateRecord(atletaDaAggiornare))
+                            {
+                                Console.WriteLine("Atleta aggiornato con successo.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Errore durante l'aggiornamento dell'atleta.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Atleta non trovato.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 5:
-                    // Call method to delete an atleta
+                    Console.Write("Inserisci l'ID dell'atleta da eliminare: ");
+                    if (int.TryParse(Console.ReadLine(), out int deleteId))
+                    {
+                        if (atletaDAO.DeleteRecord(deleteId))
+                        {
+                            Console.WriteLine("Atleta eliminato con successo.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Errore durante l'eliminazione dell'atleta.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("ID non valido.");
+                    }
                     break;
                 case 6:
                     // Call method to get all eventi
