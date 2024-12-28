@@ -254,5 +254,33 @@ public class AdditionalMethods
             Console.WriteLine($"  - Sport: {result["Sport"]} -> Giocatori: {result["Giocatori"]}, Medaglie: {result["Medaglie"]}");
         }
     }
+    public void DisplayMostWonCategory()
+    {
+        var query = @"
+        SELECT 
+            g.Categoria AS Categoria,
+            COUNT(m.Id) AS Medaglie
+        FROM 
+            Medagliere m
+        JOIN 
+            Gare g ON m.IdGara = g.Id
+        GROUP BY 
+            g.Categoria
+        ORDER BY 
+            Medaglie DESC;
+    ";
 
+        using var command = new SqlCommand(query);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any())
+        {
+            Console.WriteLine("Nessuna medaglia trovata.");
+            return;
+        }
+
+        var mostWonCategory = results.First();
+        Console.WriteLine($"La categoria più vinta nel medagliere è: {mostWonCategory["Categoria"]}, Medaglie: {mostWonCategory["Medaglie"]}");
+    }
 }
