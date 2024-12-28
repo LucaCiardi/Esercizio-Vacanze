@@ -117,4 +117,38 @@ public class AdditionalMethods
             Console.WriteLine($"  - {gara["Gara"]}");
         }
     }
+
+    public void DisplayMedalsCount(int athleteId)
+    {
+        var query = @"
+            SELECT 
+                SUM(CASE WHEN m.Podio = 'Oro' THEN 1 ELSE 0 END) AS NumeroOri,
+                SUM(CASE WHEN m.Podio = 'Argento' THEN 1 ELSE 0 END) AS NumeroArgenti,
+                SUM(CASE WHEN m.Podio = 'Bronzo' THEN 1 ELSE 0 END) AS NumeroBronzi
+            FROM 
+                Medagliere m
+            WHERE 
+                m.IdAtleta = @athleteId;
+        ";
+
+        using var command = new SqlCommand(query);
+        command.Parameters.AddWithValue("@athleteId", athleteId);
+
+        var results = _database.ReadDb(command);
+
+        if (results == null || !results.Any() || !results[0].ContainsKey("NumeroOri"))
+        {
+            Console.WriteLine("Nessuna medaglia trovata per l'atleta.");
+            return;
+        }
+
+        var numeroOri = results[0]["NumeroOri"];
+        var numeroArgenti = results[0]["NumeroArgenti"];
+        var numeroBronzi = results[0]["NumeroBronzi"];
+
+        Console.WriteLine($"Medaglie Totali per l'Atleta con ID {athleteId}:");
+        Console.WriteLine($"  - Ori: {numeroOri}");
+        Console.WriteLine($"  - Argenti: {numeroArgenti}");
+        Console.WriteLine($"  - Bronzi: {numeroBronzi}");
+    }
 }
