@@ -61,11 +61,19 @@ namespace DAOs
             if (entity is not Medaglia medaglia)
                 return false;
 
+            // Assign a new unique Id if it is not provided
+            if (medaglia.Id == 0)
+            {
+                medaglia.Id = GetNextId("Medagliere");
+            }
+
             var command = new SqlCommand(
-                "INSERT INTO Medagliere (Podio, IdEvento, IdGara) VALUES (@Podio, @IdEvento, @IdGara)");
-            command.Parameters.AddWithValue("@Podio", StringUtils.EscapeSingleQuotes(medaglia.Podio));
-            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
+                "INSERT INTO Medagliere (Id, IdAtleta, IdGara, IdEvento, medaglia) VALUES (@Id, @IdAtleta, @IdGara, @IdEvento, @Medaglia)");
+            command.Parameters.AddWithValue("@Id", medaglia.Id);
+            command.Parameters.AddWithValue("@IdAtleta", DBNull.Value); // Adjust if needed
             command.Parameters.AddWithValue("@IdGara", medaglia.Gara.Id);
+            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
+            command.Parameters.AddWithValue("@Medaglia", StringUtils.EscapeSingleQuotes(medaglia.Podio));
             return _db.UpdateDb(command);
         }
 
@@ -75,11 +83,12 @@ namespace DAOs
                 return false;
 
             var command = new SqlCommand(
-                "UPDATE Medagliere SET Podio = @Podio, IdEvento = @IdEvento, IdGara = @IdGara WHERE Id = @Id");
+                "UPDATE Medagliere SET IdAtleta = @IdAtleta, IdGara = @IdGara, IdEvento = @IdEvento, medaglia = @Medaglia WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", medaglia.Id);
-            command.Parameters.AddWithValue("@Podio", StringUtils.EscapeSingleQuotes(medaglia.Podio));
-            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
+            command.Parameters.AddWithValue("@IdAtleta", DBNull.Value); // Adjust if needed
             command.Parameters.AddWithValue("@IdGara", medaglia.Gara.Id);
+            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
+            command.Parameters.AddWithValue("@Medaglia", StringUtils.EscapeSingleQuotes(medaglia.Podio));
             return _db.UpdateDb(command);
         }
 
@@ -87,6 +96,63 @@ namespace DAOs
         {
             var command = new SqlCommand("DELETE FROM Medagliere WHERE Id = @Id");
             command.Parameters.AddWithValue("@Id", recordId);
+            return _db.UpdateDb(command);
+        }
+
+        public int GetNextId(string tableName)
+        {
+            var query = $"SELECT ISNULL(MAX(Id), 0) + 1 FROM {tableName}";
+            using (var command = new SqlCommand(query, _db.Connection))
+            {
+                _db.Connection.Open();
+                var nextId = (int)command.ExecuteScalar();
+                _db.Connection.Close();
+                return nextId;
+            }
+        }
+
+        public int? GetIdAtletaFromInputOrDatabase(string[] data)
+        {
+            if (data.Length > 1) // Ensure there's enough data to retrieve idatleta
+            {
+                // Check if the value is "NULL" or whitespace
+                if (data[1] == "NULL" || string.IsNullOrWhiteSpace(data[1]))
+                {
+                    return null;
+                }
+
+                // Try to parse the idatleta value
+                if (int.TryParse(data[1], out int idAtleta))
+                {
+                    return idAtleta;
+                }
+            }
+
+            // Return null if the idatleta cannot be retrieved or parsed
+            return null;
+        }
+
+        public bool CreateRecordWithIdAtleta(Medaglia medaglia, int? idAtleta)
+        {
+            var command = new SqlCommand(
+                "INSERT INTO Medagliere (Id, IdAtleta, IdGara, IdEvento, medaglia) VALUES (@Id, @IdAtleta, @IdGara, @IdEvento, @Medaglia)");
+            command.Parameters.AddWithValue("@Id", medaglia.Id);
+            command.Parameters.AddWithValue("@IdAtleta", idAtleta.HasValue ? (object)idAtleta.Value : DBNull.Value);
+            command.Parameters.AddWithValue("@IdGara", medaglia.Gara?.Id ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento?.Id ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@Medaglia", StringUtils.EscapeSingleQuotes(medaglia.Podio));
+            return _db.UpdateDb(command);
+        }
+
+        public bool UpdateRecordWithIdAtleta(Medaglia medaglia, int? idAtleta)
+        {
+            var command = new SqlCommand(
+                "UPDATE Medagliere SET IdAtleta = @IdAtleta, IdGara = @IdGara, IdEvento = @IdEvento, medaglia = @Medaglia WHERE Id = @Id");
+            command.Parameters.AddWithValue("@Id", medaglia.Id);
+            command.Parameters.AddWithValue("@IdAtleta", idAtleta.HasValue ? (object)idAtleta.Value : DBNull.Value);
+            command.Parameters.AddWithValue("@IdGara", medaglia.Gara.Id);
+            command.Parameters.AddWithValue("@IdEvento", medaglia.Evento.Id);
+            command.Parameters.AddWithValue("@Medaglia", StringUtils.EscapeSingleQuotes(medaglia.Podio));
             return _db.UpdateDb(command);
         }
     }

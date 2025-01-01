@@ -62,7 +62,8 @@ namespace DAOs
                 return false;
 
             var command = new SqlCommand(
-                "INSERT INTO Eventi (Tipo, Luogo, Anno) VALUES (@Tipo, @Luogo, @Anno)");
+                "INSERT INTO Eventi (Id, Tipo, Luogo, Anno) VALUES (@Id, @Tipo, @Luogo, @Anno)");
+            command.Parameters.AddWithValue("@Id", evento.Id);
             command.Parameters.AddWithValue("@Tipo", StringUtils.EscapeSingleQuotes(evento.Tipo));
             command.Parameters.AddWithValue("@Luogo", StringUtils.EscapeSingleQuotes(evento.Luogo));
             command.Parameters.AddWithValue("@Anno", evento.Anno);

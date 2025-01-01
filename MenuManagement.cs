@@ -7,9 +7,23 @@ public class MenuManagement
 {
     private readonly IDatabase _database;
 
-    public MenuManagement(IDatabase database)
+    private MenuManagement(IDatabase database)
     {
         _database = database;
+    }
+    private static MenuManagement? instance = null;
+    private static readonly object _lock = new();
+
+    public static MenuManagement GetInstance(IDatabase database)
+    {
+        if (instance == null)
+        {
+            lock (_lock)
+            {
+                instance ??= new MenuManagement(database);
+            }
+        }
+        return instance;
     }
 
     public void DisplayMenu()
@@ -472,7 +486,16 @@ public class MenuManagement
                         break;
                     }
 
-                    if (medagliaDAO.CreateRecord(nuovaMedaglia))
+                    // Ask for IdAtleta
+                    Console.Write("Inserisci l'ID dell'atleta (lascia vuoto per mantenere invariato): ");
+                    var atletaIdCreateInput = Console.ReadLine();
+                    int? atletaIdCreate = null;
+                    if (!string.IsNullOrEmpty(atletaIdCreateInput) && int.TryParse(atletaIdCreateInput, out int idAtletaCreate))
+                    {
+                        atletaIdCreate = idAtletaCreate;
+                    }
+
+                    if (medagliaDAO.CreateRecordWithIdAtleta(nuovaMedaglia, atletaIdCreate))
                     {
                         Console.WriteLine("Nuova medaglia creata con successo.");
                     }
@@ -481,6 +504,7 @@ public class MenuManagement
                         Console.WriteLine("Errore durante la creazione della nuova medaglia.");
                     }
                     break;
+
                 case 19:
                     Console.Write("Inserisci l'ID della medaglia da aggiornare: ");
                     if (int.TryParse(Console.ReadLine(), out int updateMedagliaId))
@@ -515,7 +539,16 @@ public class MenuManagement
                                     Console.WriteLine("Gara non trovata.");
                             }
 
-                            if (medagliaDAO.UpdateRecord(medagliaDaAggiornare))
+                            // Ask for IdAtleta
+                            Console.Write("Inserisci l'ID dell'atleta (lascia vuoto per mantenere invariato): ");
+                            var atletaIdUpdateInput = Console.ReadLine();
+                            int? atletaIdUpdate = null;
+                            if (!string.IsNullOrEmpty(atletaIdUpdateInput) && int.TryParse(atletaIdUpdateInput, out int idAtletaUpdate))
+                            {
+                                atletaIdUpdate = idAtletaUpdate;
+                            }
+
+                            if (medagliaDAO.UpdateRecordWithIdAtleta(medagliaDaAggiornare, atletaIdUpdate))
                             {
                                 Console.WriteLine("Medaglia aggiornata con successo.");
                             }
@@ -612,69 +645,199 @@ public class MenuManagement
                         if (int.TryParse(Console.ReadLine(), out int fileType))
                         {
                             var lines = File.ReadAllLines(filePath28);
-                            switch (fileType)
+                            var startIndex = 0;
+
+                            if (!int.TryParse(lines[0].Split(';')[0], out _))
                             {
-                                case 1:
-                                    foreach (var line in lines)
-                                    {
-                                        var data = line.Split(',');
+                                startIndex = 1; // Skip the first row if it's not a number
+                            }
+
+                            for (int i = startIndex; i < lines.Length; i++)
+                            {
+                                var data = lines[i].Split(';');
+                                switch (fileType)
+                                {
+                                    case 1 when data.Length >= 5:
                                         var atleta = new Atleta
                                         {
-                                            Nome = data[0],
-                                            Cognome = data[1],
-                                            Dob = DateTime.Parse(data[2]),
-                                            Nazione = data[3]
+                                            Id = int.Parse(data[0]),
+                                            Nome = data[1],
+                                            Cognome = data[2],
+                                            Dob = DateTime.Parse(data[3]),
+                                            Nazione = data[4]
                                         };
-                                        atletaDAO.CreateRecord(atleta);
-                                    }
-                                    Console.WriteLine("Dati atleti aggiornati con successo.");
-                                    break;
-                                case 2:
-                                    foreach (var line in lines)
-                                    {
-                                        var data = line.Split(',');
+                                        if (_database.RecordExists("Atleti", atleta.Id))
+                                        {
+                                            Console.WriteLine($"L'id {atleta.Id} esiste già. Vuoi sostituire i dati esistenti? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                atletaDAO.UpdateRecord(atleta);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            atletaDAO.CreateRecord(atleta);
+                                        }
+                                        break;
+                                    case 2 when data.Length >= 4:
                                         var evento = new Evento
                                         {
-                                            Tipo = data[0],
-                                            Luogo = data[1],
-                                            Anno = int.Parse(data[2])
+                                            Id = int.Parse(data[0]),
+                                            Tipo = data[1],
+                                            Anno = int.Parse(data[2]),
+                                            Luogo = data[3]
                                         };
-                                        eventoDAO.CreateRecord(evento);
-                                    }
-                                    Console.WriteLine("Dati eventi aggiornati con successo.");
-                                    break;
-                                case 3:
-                                    foreach (var line in lines)
-                                    {
-                                        var data = line.Split(',');
+                                        if (_database.RecordExists("Eventi", evento.Id))
+                                        {
+                                            Console.WriteLine($"L'id {evento.Id} esiste già. Vuoi sostituire i dati esistenti? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                eventoDAO.UpdateRecord(evento);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            eventoDAO.CreateRecord(evento);
+                                        }
+                                        break;
+                                    case 3 when data.Length >= 5:
                                         var gara = new Gara
                                         {
-                                            Nome = data[0],
-                                            Categoria = data[1],
-                                            Squadra = bool.Parse(data[2])
+                                            Id = int.Parse(data[0]),
+                                            Nome = data[1],
+                                            Categoria = data[2],
+                                            Indoor = data[3] == "1",
+                                            Squadra = data[4] == "1"
                                         };
-                                        garaDAO.CreateRecord(gara);
-                                    }
-                                    Console.WriteLine("Dati gare aggiornati con successo.");
-                                    break;
-                                case 4:
-                                    foreach (var line in lines)
-                                    {
-                                        var data = line.Split(',');
+                                        if (_database.RecordExists("Gare", gara.Id))
+                                        {
+                                            Console.WriteLine($"L'id {gara.Id} esiste già. Vuoi sostituire i dati esistenti? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                garaDAO.UpdateRecord(gara);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            garaDAO.CreateRecord(gara);
+                                        }
+                                        break;
+                                    case 4 when data.Length >= 5:
+                                        int? id = (data[0] == "NULL" || string.IsNullOrWhiteSpace(data[0])) ? (int?)null : int.Parse(data[0]);
+                                        int? idAtleta = (data[1] == "NULL" || string.IsNullOrWhiteSpace(data[1])) ? (int?)null : int.Parse(data[1]);
+                                        int? idGara = (data[2] == "NULL" || string.IsNullOrWhiteSpace(data[2])) ? (int?)null : int.Parse(data[2]);
+                                        int? idEvento = (data[3] == "NULL" || string.IsNullOrWhiteSpace(data[3])) ? (int?)null : int.Parse(data[3]);
+                                        string podio = data[4];
+
+                                        // Ensure idGara is valid or created
+                                        if (idGara.HasValue && garaDAO.FindRecord(idGara.Value) == null)
+                                        {
+                                            Console.WriteLine($"Gara con ID {idGara} non trovata. Vuoi creare una nuova Gara con ID {idGara}? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                var newGara = new Gara
+                                                {
+                                                    Id = idGara.Value,
+                                                    Nome = "New Gara",
+                                                    Categoria = "New Categoria",
+                                                    Indoor = false,
+                                                    Squadra = false
+                                                };
+                                                garaDAO.CreateRecord(newGara);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Medaglia non inserita");
+                                                continue;
+                                            }
+                                        }
+
+                                        // Ensure idEvento is valid or created
+                                        if (idEvento.HasValue && eventoDAO.FindRecord(idEvento.Value) == null)
+                                        {
+                                            Console.WriteLine($"Evento con ID {idEvento} non trovato. Vuoi creare un nuovo Evento con ID {idEvento}? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                var newEvento = new Evento
+                                                {
+                                                    Id = idEvento.Value,
+                                                    Tipo = "New Evento",
+                                                    Anno = default,
+                                                    Luogo = "New Luogo"
+                                                };
+                                                eventoDAO.CreateRecord(newEvento);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Medaglia non inserita");
+                                                continue;
+                                            }
+                                        }
+
+                                        // Ensure idAtleta is valid or created
+                                        if (idAtleta.HasValue && atletaDAO.FindRecord(idAtleta.Value) == null)
+                                        {
+                                            Console.WriteLine($"Atleta con ID {idAtleta} non trovato. Vuoi creare un nuovo Atleta con ID {idAtleta}? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                var newAtleta = new Atleta
+                                                {
+                                                    Id = idAtleta.Value,
+                                                    Nome = "New Nome",
+                                                    Cognome = "New Cognome",
+                                                    Dob = DateTime.Now,
+                                                    Nazione = "New Nazione"
+                                                };
+                                                atletaDAO.CreateRecord(newAtleta);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Medaglia non inserita");
+                                                continue;
+                                            }
+                                        }
+
                                         var medaglia = new Medaglia
                                         {
-                                            Podio = data[0],
-                                            Evento = eventoDAO.FindRecord(int.Parse(data[1])) as Evento,
-                                            Gara = garaDAO.FindRecord(int.Parse(data[2])) as Gara
+                                            Id = id ?? medagliaDAO.GetNextId("Medagliere"),
+                                            Podio = podio,
+                                            Evento = idEvento.HasValue ? new Evento { Id = idEvento.Value } : null,
+                                            Gara = idGara.HasValue ? new Gara { Id = idGara.Value } : null
                                         };
-                                        medagliaDAO.CreateRecord(medaglia);
-                                    }
-                                    Console.WriteLine("Dati medagliere aggiornati con successo.");
-                                    break;
-                                default:
-                                    Console.WriteLine("Tipo di dati non riconosciuto.");
-                                    break;
+
+                                        if (_database.RecordExists("Medagliere", medaglia.Id))
+                                        {
+                                            Console.WriteLine($"L'id {medaglia.Id} esiste già. Vuoi sostituire i dati esistenti? (sì/no)");
+                                            var response = Console.ReadLine();
+                                            if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                medagliaDAO.UpdateRecordWithIdAtleta(medaglia, idAtleta);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                medagliaDAO.CreateRecordWithIdAtleta(medaglia, idAtleta);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine($"Errore durante l'inserimento della medaglia: {ex.Message}");
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        Console.WriteLine("Riga non valida o incompleta: " + lines[i]);
+                                        break;
+                                }
                             }
+                            Console.WriteLine("Dati aggiornati con successo.");
                         }
                         else
                         {

@@ -29,9 +29,9 @@ namespace Utility
         /// </summary>
         /// <param name="nomeDB">Il nome del database.</param>
         /// <param name="server">Il nome del server. Valore predefinito è "localhost".</param>
-        public Database(string nomeDB, string server = "localhost")
+        public Database(string dbPath, string server = "(localdb)\\MSSQLLocalDB")
         {
-            Connection = new SqlConnection($"Server={server};Database={nomeDB};Integrated Security=true;TrustServerCertificate=true;");
+            Connection = new SqlConnection($"Server={server};AttachDbFilename={dbPath};Integrated Security=true;TrustServerCertificate=true;");
         }
 
         #endregion
@@ -208,6 +208,29 @@ namespace Utility
             finally
             {
                 Connection.Close();
+            }
+        }
+        public bool RecordExists(string tableName, int id)
+        {
+            var query = $"SELECT COUNT(1) FROM {tableName} WHERE id = @id";
+            using (var command = new SqlCommand(query, Connection))
+            {
+                command.Parameters.AddWithValue("@id", id);
+                Connection.Open();
+                var exists = (int)command.ExecuteScalar() > 0;
+                Connection.Close();
+                return exists;
+            }
+        }
+        public int GetNextId(string tableName)
+        {
+            var query = $"SELECT ISNULL(MAX(id), 0) + 1 FROM {tableName}";
+            using (var command = new SqlCommand(query, Connection))
+            {
+                Connection.Open();
+                var nextId = (int)command.ExecuteScalar();
+                Connection.Close();
+                return nextId;
             }
         }
 

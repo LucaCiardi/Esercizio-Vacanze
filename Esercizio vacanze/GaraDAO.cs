@@ -62,7 +62,8 @@ namespace DAOs
                 return false;
 
             var command = new SqlCommand(
-                "INSERT INTO Gare (Nome, Categoria, Indoor, Squadra) VALUES (@Nome, @Categoria, @Indoor, @Squadra)");
+                "INSERT INTO Gare (Id, Nome, Categoria, Indoor, Squadra) VALUES (@Id, @Nome, @Categoria, @Indoor, @Squadra)");
+            command.Parameters.AddWithValue("@Id", gara.Id);
             command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(gara.Nome));
             command.Parameters.AddWithValue("@Categoria", StringUtils.EscapeSingleQuotes(gara.Categoria));
             command.Parameters.AddWithValue("@Indoor", gara.Indoor);

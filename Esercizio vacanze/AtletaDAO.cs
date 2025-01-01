@@ -58,16 +58,45 @@ namespace DAOs
 
         public bool CreateRecord(Entity entity)
         {
-            if (entity is not Atleta atleta)
-                return false;
+            var atleta = entity as Atleta;
+            if (atleta == null)
+                throw new ArgumentException("Entity must be of type Atleta");
 
-            var command = new SqlCommand(
-                "INSERT INTO Atleti (Nome, Cognome, Dob, Nazione) VALUES (@Nome, @Cognome, @Dob, @Nazione)");
-            command.Parameters.AddWithValue("@Nome", StringUtils.EscapeSingleQuotes(atleta.Nome));
-            command.Parameters.AddWithValue("@Cognome", StringUtils.EscapeSingleQuotes(atleta.Cognome));
-            command.Parameters.AddWithValue("@Dob", atleta.Dob);
-            command.Parameters.AddWithValue("@Nazione", StringUtils.EscapeSingleQuotes(atleta.Nazione));
-            return _db.UpdateDb(command);
+            var query = "INSERT INTO Atleti (Id, Nome, Cognome, Dob, Nazione) VALUES (@Id, @Nome, @Cognome, @Dob, @Nazione)";
+            int? id = atleta.Id;
+
+            if (!id.HasValue)
+            {
+                id = _db.GetNextId("Atleti");
+            }
+
+            if (_db.RecordExists("Atleti", id.Value))
+            {
+                Console.WriteLine($"L'id {id} esiste già. Vuoi sovrascrivere i dati esistenti? (sì/no)");
+                var response = Console.ReadLine();
+                if (response != null && response.Equals("sì", StringComparison.OrdinalIgnoreCase))
+                {
+                    atleta.Id = id.Value;
+                    return UpdateRecord(atleta);
+                }
+                else
+                {
+                    id = _db.GetNextId("Atleti");
+                }
+            }
+
+            using (var command = new SqlCommand(query, _db.Connection))
+            {
+                command.Parameters.AddWithValue("@Id", id.Value);
+                command.Parameters.AddWithValue("@Nome", atleta.Nome);
+                command.Parameters.AddWithValue("@Cognome", atleta.Cognome);
+                command.Parameters.AddWithValue("@Dob", atleta.Dob);
+                command.Parameters.AddWithValue("@Nazione", atleta.Nazione);
+                _db.Connection.Open();
+                var result = command.ExecuteNonQuery() > 0;
+                _db.Connection.Close();
+                return result;
+            }
         }
 
         public bool UpdateRecord(Entity entity)

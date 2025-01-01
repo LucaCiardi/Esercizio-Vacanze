@@ -7,6 +7,14 @@ namespace Utility
     /// </summary>
     public interface IDatabase
     {
+       
+            SqlConnection Connection { get; }
+
+            int GetNextId(string tableName);
+
+            bool RecordExists(string tableName, int id);
+      
+
         #region Metodi di Lettura
 
         /// <summary>
@@ -59,5 +67,6 @@ namespace Utility
         bool UpdateDb(SqlCommand command);
 
         #endregion
+
     }
 }
