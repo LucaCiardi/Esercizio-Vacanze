@@ -1,6 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using System.Collections.Generic;
-using Entities;
 using Utility;
 
 namespace DAOs
@@ -31,7 +29,19 @@ namespace DAOs
         public List<Entity> GetRecords()
         {
             var result = new List<Entity>();
-            var command = new SqlCommand("SELECT * FROM Medagliere");
+            var command = new SqlCommand(@"
+        SELECT m.*, 
+               e.tipo as evento_tipo, 
+               e.luogo as evento_luogo, 
+               e.anno as evento_anno,
+               g.nome as gara_nome, 
+               g.categoria as gara_categoria, 
+               g.indoor as gara_indoor, 
+               g.squadra as gara_squadra
+        FROM Medagliere m
+        LEFT JOIN Eventi e ON m.IdEvento = e.Id
+        LEFT JOIN Gare g ON m.IdGara = g.Id");
+
             var fullResponse = _db.ReadDb(command);
             if (fullResponse == null) return result;
 
@@ -46,7 +56,20 @@ namespace DAOs
 
         public Entity? FindRecord(int recordId)
         {
-            var command = new SqlCommand("SELECT * FROM Medagliere WHERE Id = @Id");
+            var command = new SqlCommand(@"
+        SELECT m.*, 
+               e.tipo as evento_tipo, 
+               e.luogo as evento_luogo, 
+               e.anno as evento_anno,
+               g.nome as gara_nome, 
+               g.categoria as gara_categoria, 
+               g.indoor as gara_indoor, 
+               g.squadra as gara_squadra
+        FROM Medagliere m
+        LEFT JOIN Eventi e ON m.IdEvento = e.Id
+        LEFT JOIN Gare g ON m.IdGara = g.Id
+        WHERE m.Id = @Id");
+
             command.Parameters.AddWithValue("@Id", recordId);
             var singleResponse = _db.ReadOneDb(command);
             if (singleResponse == null) return null;
